@@ -34,8 +34,23 @@ echo "STATUS: tkregister2"
 tkregister2 \
     --mov ${inDir}/mri/rawavg.mgz \
     --targ ${inDir}/mri/orig.mgz \
-    --reg ${native}/register.native.dat \
+    --reg ${native}/orig2raw.native.dat \
     --noedit --regheader
+
+tkregister2 \
+    --mov ${inDir}/mri/orig.mgz \
+    --targ ${inDir}/mri/rawavg.mgz \
+    --reg ${native}/raw2orig.native.dat \
+    --noedit --regheader
+
+#Find c_ras offset between FreeSurfer surface and volume and generate matrix to transform surfaces
+MatrixX=$(mri_info ${inDir}/mri/brain.finalsurfs.mgz | grep "c_r" | cut -d "=" -f 5 | sed s/" "/""/g)
+MatrixY=$(mri_info ${inDir}/mri/brain.finalsurfs.mgz | grep "c_a" | cut -d "=" -f 5 | sed s/" "/""/g)
+MatrixZ=$(mri_info ${inDir}/mri/brain.finalsurfs.mgz | grep "c_s" | cut -d "=" -f 5 | sed s/" "/""/g)
+echo "1 0 0 ""$MatrixX" > ${inDir}/mri/c_ras.mat
+echo "0 1 0 ""$MatrixY" >> ${inDir}/mri/c_ras.mat
+echo "0 0 1 ""$MatrixZ" >> ${inDir}/mri/c_ras.mat
+echo "0 0 0 1" >> ${inDir}/mri/c_ras.mat
 
 for hemi in l r
 do
@@ -78,6 +93,7 @@ do
         mris_convert ${inDir}/surf/${hemi}h.${surface} ${workingImg}
 		wb_command -set-structure ${native}/${subject}.${outHemi}.${surface}.native.surf.gii \
             ${structure} -surface-type ${stype} ${secondary}
+		wb_command -surface-apply-affine ${workingImg} ${inDir}/mri/c_ras.mat ${workingImg}
     done
 
     wb_command -surface-average ${native}/${subject}.${outHemi}.midthickness.native.surf.gii \
@@ -162,26 +178,26 @@ do
 	wb_command -metric-dilate ${workingImg} ${midthickness} 10 ${workingImg} -nearest
 	wb_command -metric-dilate ${curv} ${midthickness} 10 ${curv} -nearest
 done
-
-echo "STATUS: Merging parcellations to native.dlabel.nii"
-for map in aparc aparc.a2009s
-do
-    wb_command -cifti-create-label ${native}/${subject}.${map}.native.dlabel.nii \
-        -left-label ${native}/${subject}.L.${map}.native.label.gii \
-        -right-label ${native}/${subject}.R.${map}.native.label.gii
-    wb_command -set-map-names ${native}/${subject}.${map}.native.dlabel.nii \
-        -map 1 "$subject"_${map}
-done
-
-echo "STATUS: Merging metrices into native.dscalar.nii"
-for metric in sulc thickness curv
-do
-    wb_command -cifti-create-dense-scalar ${native}/${subject}.${metric}.native.dscalar.nii \
-        -left-metric ${native}/${subject}.L.${metric}.native.shape.gii \
-        -right-metric ${native}/${subject}.R.${metric}.native.shape.gii
-    wb_command -set-map-names ${native}/${subject}.${metric}.native.dscalar.nii \
-        -map 1 "$subject"_${metric}
-done
+# 
+# echo "STATUS: Merging parcellations to native.dlabel.nii"
+# for map in aparc aparc.a2009s
+# do
+#     wb_command -cifti-create-label ${native}/${subject}.${map}.native.dlabel.nii \
+#         -left-label ${native}/${subject}.L.${map}.native.label.gii \
+#         -right-label ${native}/${subject}.R.${map}.native.label.gii
+#     wb_command -set-map-names ${native}/${subject}.${map}.native.dlabel.nii \
+#         -map 1 "$subject"_${map}
+# done
+# 
+# echo "STATUS: Merging metrices into native.dscalar.nii"
+# for metric in sulc thickness curv
+# do
+#     wb_command -cifti-create-dense-scalar ${native}/${subject}.${metric}.native.dscalar.nii \
+#         -left-metric ${native}/${subject}.L.${metric}.native.shape.gii \
+#         -right-metric ${native}/${subject}.R.${metric}.native.shape.gii
+#     wb_command -set-map-names ${native}/${subject}.${metric}.native.dscalar.nii \
+#         -map 1 "$subject"_${metric}
+# done
 
 echo "STATUS: Resampling to hcp space."
 for hemi in L R
@@ -242,3 +258,29 @@ do
         done
     done
 done
+
+# echo "STATUS: Converting to HCP space."
+# for hemi in L R
+# do
+#     template_dir=${scriptDir}/standard_mesh_atlases/fs_${hemi}
+#     wb_command -surface-sphere-project-unproject \
+#         ${native}/${subject}.${hemi}.sphere.reg.native.surf.gii \
+#         ${template_dir}/fsaverage.${hemi}.sphere.164k_fs_${hemi}.surf.gii \
+#         ${template_dir}/fs_${hemi}-to-fs_LR_fsaverage.${hemi}_LR.spherical_std.164k_fs_${hemi}.surf.gii \
+#         ${native}/${subject}.${hemi}.sphere.reg.reg_LR.native.surf.gii
+# 
+#     for surface in inflated pial white midthickness
+#     do
+#         inImg=${native}/${subject}.${hemi}.${surface}.native.surf.gii
+#         outImg=${hcp}/${subject}.${hemi}.${surface}.164k_FS_LR.surf.gii
+# 
+#         wb_command -surface-resample \
+#             ${inImg} \
+#             ${native}/${subject}.${hemi}.sphere.reg.reg_LR.native.surf.gii \
+#             ${template_dir}/fs_${hemi}-to-fs_LR_fsaverage.${hemi}_LR.spherical_std.164k_fs_${hemi}.surf.gii \
+#             BARYCENTRIC \
+#             ${outImg}
+#     done
+# done
+
+        
