@@ -79,18 +79,26 @@ do
             secondary=
         fi
 
-        # # --surfreg white
-        # echo "STATUS: mri_surf2surf"
-        # mri_surf2surf \
-        #     --sval-xyz ${surface} \
-        #     --reg ${native}/register.native.dat ${inDir}/mri/rawavg.mgz \
-        #     --tval ${inDir}/surf/${hemi}h.${surface}.native \
-        #     --tval-xyz ${inDir}/mri/rawavg.mgz \
-        #     --hemi ${hemi}h \
-        #     --s ${subject}
+        # --surfreg white
+        echo "STATUS: mri_surf2surf"
+        mri_surf2surf \
+            --sval-xyz ${surface} \
+            --reg ${native}/orig2raw.native.dat ${inDir}/mri/rawavg.mgz \
+            --tval ${inDir}/surf/${hemi}h.${surface}.deformed \
+            --tval-xyz ${inDir}/mri/rawavg.mgz \
+            --hemi ${hemi}h \
+            --s ${subject}
+
+        mri_surf2surf \
+            --sval-xyz ${surface}.deformed \
+            --reg ${native}/raw2orig.native.dat ${inDir}/mri/orig.mgz \
+            --tval ${inDir}/surf/${hemi}h.${surface}.native \
+            --tval-xyz ${inDir}/mri/orig.mgz \
+            --hemi ${hemi}h \
+            --s ${subject}
             
         workingImg=${native}/${subject}.${outHemi}.${surface}.native.surf.gii
-        mris_convert ${inDir}/surf/${hemi}h.${surface} ${workingImg}
+        mris_convert ${inDir}/surf/${hemi}h.${surface}.native ${workingImg}
 		wb_command -set-structure ${native}/${subject}.${outHemi}.${surface}.native.surf.gii \
             ${structure} -surface-type ${stype} ${secondary}
 		wb_command -surface-apply-affine ${workingImg} ${inDir}/mri/c_ras.mat ${workingImg}
