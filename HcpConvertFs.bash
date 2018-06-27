@@ -55,11 +55,11 @@ do
         if [ "${surface}" = pial ]
         then
             stype=ANATOMICAL
-            secondary="-surface-secondary-type GRAY_WHITE"
+            secondary="-surface-secondary-type PIAL"
         elif [ "${surface}" = white ]
         then
             stype=ANATOMICAL
-            secondary="-surface-secondary-type PIAL"
+            secondary="-surface-secondary-type GRAY_WHITE"
         else
             stype=INFLATED
             secondary=
@@ -67,7 +67,7 @@ do
 
         workingImg=${native}/${subject}.${outHemi}.${surface}.native.surf.gii
         mris_convert ${inDir}/surf/${hemi}h.${surface} ${workingImg}
-		wb_command -set-structure ${native}/${subject}.${outHemi}.${surface}.native.surf.gii \
+		wb_command -set-structure ${workingImg} \
             ${structure} -surface-type ${stype} ${secondary}
 		wb_command -surface-apply-affine ${workingImg} ${inDir}/mri/c_ras.mat ${workingImg}
     done
