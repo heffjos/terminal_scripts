@@ -77,6 +77,10 @@ do
         -surf ${native}/${subject}.${outHemi}.pial.native.surf.gii
     wb_command -set-structure ${native}/${subject}.${outHemi}.midthickness.native.surf.gii \
         ${structure} -surface-type ANATOMICAL -surface-secondary-type MIDTHICKNESS
+    wb_command -surface-generate-inflated \
+        ${native}/${subject}.${outHemi}.midthickness.native.surf.gii \
+        ${native}/${subject}.${outHemi}.wbc_inflated.native.surf.gii \
+        ${native}/${subject}.${outHemi}.wbc_very_inflated.native.surf.gii
 
     echo "STATUS: Converting ${outHemi} spheres."
     for surface in sphere.reg sphere
@@ -188,9 +192,12 @@ do
                 BARYCENTRIC \
                 ${outImg}
         done
-
         curMidthickness=${native}/${subject}.${hemi}.midthickness.native.surf.gii
         newMidthickness=${hcp}/${subject}.${hemi}.midthickness.${res}_FS_LR.surf.gii
+        wb_command -surface-generate-inflated \
+            ${newMidthickness} \
+            ${hcp}/${subject}.${hemi}.wbc_inflated.${res}_FS_LR.surf.gii \
+            ${hcp}/${subject}.${hemi}.wbc_very_inflated.${res}_FS_LR.surf.gii
 
         # convert metrics to hcp space
         echo "STATUS: Resample ${hemi} metrices to ${res}_FS_LR space." 
