@@ -206,6 +206,11 @@ do
                 ADAP_BARY_AREA \
                 ${outImg} \
                 -area-surfs ${curMidthickness} ${newMidthickness}
+
+            wb_command -metric-mask \
+                ${outImg} \
+                ${scriptDir}/standard_mesh_atlases/${hemi}.atlasroi.${res}_fs_LR.shape.gii \
+                ${outImg}
         done
 
         # map labels to HCP space
